@@ -6,7 +6,6 @@ public class Player : MonoBehaviour
 {
     [SerializeField] private Light m_Light;
     [SerializeField] private GameObject m_GunInventory;
-    [SerializeField] private AudioClip m_LightSound;
     public uint m_NumberOfGuns = 5;
     public uint m_ActiveGunIndex;
 

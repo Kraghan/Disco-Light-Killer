@@ -7,7 +7,7 @@ public class Room1Event : MonoBehaviour {
     private bool m_StartedSecond = false;
     [SerializeField] private Light m_lightSpot;
     [SerializeField] private Light m_lightSpot2;
-    [SerializeField] private Light m_lightSpot3;
+    [SerializeField] private GameObject m_zombie;
     [SerializeField] private float m_TimeBetweenFlash = 0.2f;
     [SerializeField] private float m_TimeElapsedSinceLastFlash = 0.0f;
     [SerializeField] private uint m_NumberOfFlash = 10;
@@ -16,6 +16,7 @@ public class Room1Event : MonoBehaviour {
     [SerializeField] private bool m_InTheDark = false;
     [SerializeField] private float m_LightIntensity = 5;
     private AudioSource m_Light1Audio;
+    private AudioSource m_Light2Audio;
     [SerializeField] private AudioClip m_AlterLightSound;
 
 
@@ -29,15 +30,14 @@ public class Room1Event : MonoBehaviour {
     public void LaunchSecond()
     {
         m_StartedSecond = true;
-        m_Light1Audio.clip = m_AlterLightSound;
-        m_Light1Audio.Play();
     }
 
     void Start ()
     {
         m_Light1Audio = m_lightSpot.GetComponent<AudioSource>();
+        m_Light2Audio = m_lightSpot2.GetComponent<AudioSource>();
         m_lightSpot2.gameObject.SetActive(false);
-        m_lightSpot3.gameObject.SetActive(false);
+        m_zombie.SetActive(false);
     }
 	
 	// Update is called once per frame
@@ -53,7 +53,8 @@ public class Room1Event : MonoBehaviour {
 
     private void ProcessSecondEvents()
     {
-
+        m_lightSpot2.gameObject.SetActive(false);
+        m_zombie.SetActive(true);
     }
 
     private void ProcessFirstEvents()
