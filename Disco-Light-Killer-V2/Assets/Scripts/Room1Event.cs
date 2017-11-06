@@ -1,10 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.PostProcessing;
 
 public class Room1Event : MonoBehaviour {
     private bool m_Started = false;
     private bool m_StartedSecond = false;
+    private bool m_soundStarted = false;
+
+    private AudioSource m_Light1Audio;
+    private AudioSource m_Light2Audio;
+
     [SerializeField] private Light m_lightSpot;
     [SerializeField] private Light m_lightSpot2;
     [SerializeField] private GameObject m_zombie;
@@ -15,10 +21,10 @@ public class Room1Event : MonoBehaviour {
     [SerializeField] private float m_TimeInTheDark = 0.1f;
     [SerializeField] private bool m_InTheDark = false;
     [SerializeField] private float m_LightIntensity = 5;
-    private AudioSource m_Light1Audio;
-    private AudioSource m_Light2Audio;
     [SerializeField] private AudioClip m_AlterLightSound;
-
+    [SerializeField] private AudioClip m_ExplodeSound;
+    [SerializeField] private PostProcessingBehaviour m_processingBehaviour;
+    [SerializeField] private PostProcessingProfile m_aberrationProfile;
 
     public void Launch()
     {
@@ -47,14 +53,22 @@ public class Room1Event : MonoBehaviour {
             ProcessFirstEvents();
 
         if (m_StartedSecond)
-            ProcessSecondEvents();
+            ProcessSecondEvents(Input.GetButton("FlashLight"));
         
 	}
 
-    private void ProcessSecondEvents()
+    private void ProcessSecondEvents(bool lightOn)
     {
-        m_lightSpot2.gameObject.SetActive(false);
-        m_zombie.SetActive(true);
+        m_processingBehaviour.profile = m_aberrationProfile;
+        if (!m_soundStarted)
+        {
+            m_Light2Audio.Stop();
+            m_Light2Audio.PlayOneShot(m_ExplodeSound);
+            m_lightSpot2.intensity = 0;
+            m_soundStarted = true;
+        }
+        if(lightOn)
+            m_zombie.SetActive(true);
     }
 
     private void ProcessFirstEvents()
@@ -91,6 +105,7 @@ public class Room1Event : MonoBehaviour {
         {
             m_Started = false;
             m_Light1Audio.Stop();
+            m_Light1Audio.PlayOneShot(m_ExplodeSound);
             m_lightSpot2.gameObject.SetActive(true);
         }
     }
