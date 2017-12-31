@@ -22,9 +22,11 @@ public class Guns : MonoBehaviour
     [SerializeField] private GunMode m_Mode;
     [SerializeField] private float m_Knockback;
     [SerializeField] private float m_Range;
-    //[SerializeField] private Vector3 m_BulletPopPosition;
+    [SerializeField] private Transform m_BulletPopPosition;
     [SerializeField] private GameObject m_Flash;
     [SerializeField] private uint m_NumberOfBulletInBurst;
+    [SerializeField] private AudioClip m_gunSound;
+    private AudioSource m_source;
 
     private bool m_PreviouslyShoot;
     private float m_TimeElapsedSinceLastShoot;
@@ -37,33 +39,40 @@ public class Guns : MonoBehaviour
     void Start()
     {
         m_PreviouslyShoot = false;
-        m_Flash.SetActive(false);
-        m_TimeElapsedSinceLastShoot = 0.0f;
+        if(m_Flash != null)
+            m_Flash.SetActive(false);
+        m_TimeElapsedSinceLastShoot = 0.0f; 
         m_TimeBetweenShot = 1.0f / (m_ShotPerMinute / 60.0f);
         m_HasShoot = false;
         m_IsShooting = false;
         m_BulletToShoot = 0;
+        m_source = GetComponent<AudioSource>(); 
     }
 
     // Update is called once per frame
     void Update()
     {
-        float rand = Random.Range(1f, 2f);
-        m_Flash.transform.localScale = Vector3.one * rand;
-        m_Flash.transform.Rotate(new Vector3(0.0f, 0.0f, Random.Range(0.0f, 90.0f)));
-
-        if (m_PreviouslyShoot)
+        float rand = Random.Range(0.5f, 1f);
+        if(m_Flash != null)
         {
-            m_Flash.SetActive(true);
-            m_PreviouslyShoot = false;
+            m_Flash.transform.localScale = new Vector3(rand,rand,rand);
+            m_Flash.transform.Rotate(new Vector3(Random.Range(0.0f, 90.0f), 0.0f, 0.0f));
+            if (m_PreviouslyShoot)
+            {
+                m_Flash.SetActive(true);
+                m_PreviouslyShoot = false;
+            }
+            else
+                m_Flash.SetActive(false);
         }
-        else
-            m_Flash.SetActive(false);
 
     }
 
     private void FixedUpdate()
     {
+        if (m_BulletInMagazine == 0)
+            Reload();
+
         m_TimeElapsedSinceLastShoot += Time.fixedDeltaTime;
         if(m_Mode == GunMode.BURST && CanShoot() && m_IsShooting)
         {
@@ -76,7 +85,7 @@ public class Guns : MonoBehaviour
                 m_HasShoot = true;
         }
 
-        if (!m_IsShooting && Input.GetButtonUp("Fire1"))
+        if (!m_IsShooting && !Input.GetButton("Fire"))
             m_HasShoot = false;
     }
 
@@ -107,9 +116,22 @@ public class Guns : MonoBehaviour
 
     private void DoShoot()
     {
+        m_source.PlayOneShot(m_gunSound);
         m_PreviouslyShoot = true;
         m_BulletInMagazine--;
         m_TimeElapsedSinceLastShoot = 0.0f;
+        Vector3 rayOrigin = Camera.main.ViewportToWorldPoint(new Vector3(.5f, .5f, 0));
+        RaycastHit hit;
+        if (Physics.Raycast(rayOrigin, Camera.main.transform.forward, out hit, m_Range))
+        {
+            if(hit.collider.gameObject.CompareTag("enemy"))
+            {
+                Enemy enemy = hit.collider.gameObject.GetComponent<Enemy>();
+                enemy.Hit(hit.collider is SphereCollider);
+            }
+        }
+
+        Camera.main.transform.localRotation = new Quaternion(Camera.main.transform.localRotation.x + m_Knockback, Camera.main.transform.localRotation.y, Camera.main.transform.localRotation.z, Camera.main.transform.localRotation.w);
     }
 
     public bool Reload()
@@ -117,15 +139,13 @@ public class Guns : MonoBehaviour
         if (m_BulletTotal == 0 || m_BulletInMagazine == m_BulletMax)
             return false;
 
-        uint bulletReloaded = m_BulletTotal;
+        uint bulletToReload = m_BulletMax - m_BulletInMagazine;
 
-        if(m_BulletTotal > m_BulletMax)
-            bulletReloaded = m_BulletMax;
+        if (m_BulletTotal < bulletToReload)
+            bulletToReload = m_BulletTotal;
 
-        bulletReloaded -= m_BulletInMagazine;
-
-        m_BulletInMagazine += bulletReloaded;
-        m_BulletTotal -= bulletReloaded;
+        m_BulletInMagazine += bulletToReload;
+        m_BulletTotal -= bulletToReload;
 
         return true;
     }
@@ -146,5 +166,10 @@ public class Guns : MonoBehaviour
     public string GetName()
     {
         return m_GunName;
+    }
+
+    public string DisplayAmmo()
+    {
+        return m_BulletInMagazine + " - " + m_BulletTotal;
     }
 }

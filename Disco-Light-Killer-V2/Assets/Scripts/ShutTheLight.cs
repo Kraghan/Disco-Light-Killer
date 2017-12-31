@@ -14,7 +14,7 @@ public class ShutTheLight : MonoBehaviour {
 	// Update is called once per frame
 	void Update ()
     {
-        if(Input.GetButtonDown("LightsOut"))
+        if(false && Input.GetButtonDown("LightsOut"))
         {
             if (m_light.intensity == 1)
                 m_light.intensity = 0;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.PostProcessing;
+using UnityEngine.UI;
 
 public class Room1Event : MonoBehaviour {
     private bool m_Started = false;
@@ -23,8 +24,12 @@ public class Room1Event : MonoBehaviour {
     [SerializeField] private float m_LightIntensity = 5;
     [SerializeField] private AudioClip m_AlterLightSound;
     [SerializeField] private AudioClip m_ExplodeSound;
-    [SerializeField] private PostProcessingBehaviour m_processingBehaviour;
-    [SerializeField] private PostProcessingProfile m_aberrationProfile;
+    [SerializeField] private Text m_messageUI;
+    [SerializeField] private Transform m_nextRoomStart;
+    [SerializeField] private Player m_player;
+
+    private float m_TimeElapsedWithZombie = -1;
+    private float m_TimeWithZombie = 1.5f;
 
     public void Launch()
     {
@@ -59,16 +64,36 @@ public class Room1Event : MonoBehaviour {
 
     private void ProcessSecondEvents(bool lightOn)
     {
-        m_processingBehaviour.profile = m_aberrationProfile;
         if (!m_soundStarted)
         {
             m_Light2Audio.Stop();
             m_Light2Audio.PlayOneShot(m_ExplodeSound);
             m_lightSpot2.intensity = 0;
             m_soundStarted = true;
+            m_messageUI.text = "Press \"F\" to switch on the torchlight";
         }
+
         if(lightOn)
+        {
             m_zombie.SetActive(true);
+            m_player.setParalized(true);
+            m_TimeElapsedWithZombie = 0.0f;
+        }
+
+        if (m_TimeElapsedWithZombie != -1)
+            m_TimeElapsedWithZombie += Time.deltaTime;
+
+        if (m_TimeElapsedWithZombie >= m_TimeWithZombie)
+        {
+            m_player.setParalized(false);
+            m_player.ToggleLight();
+            m_player.gameObject.transform.position = m_nextRoomStart.transform.position;
+            m_messageUI.text = "";
+            m_player.Hit();
+
+            Destroy(m_zombie);
+            Destroy(this);
+        }
     }
 
     private void ProcessFirstEvents()
